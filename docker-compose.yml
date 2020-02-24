@@ -1,0 +1,56 @@
+version: "3.7"
+
+networks:
+  elk-net:
+    name: elk-net
+    driver: bridge
+
+  hub-platform-net:
+    name: hub-platform-net
+    driver: bridge
+
+services:
+  mongo:
+    image: mongo:$MONGO_VER
+    container_name: $PM_CONTAINER_NAME
+    hostname: $PM_CONTAINER_NAME
+    ports:
+      - 27017:27017
+    networks:
+      - elk-net
+      - hub-platform-net
+
+  admin-mongo:
+    image: mongo:$MONGO_VER
+    container_name: $AM_CONTAINER_NAME
+    hostname: $AM_CONTAINER_NAME
+    ports:
+      - 27018:27017
+    networks:
+      - elk-net
+      - hub-platform-net
+
+  rabbitmq:
+    image: rabbitmq:$RABBITMQ_VER
+    container_name: $RMQ_CONTAINER_NAME
+    hostname: $RMQ_CONTAINER_NAME
+    ports:
+      - 4369:4369
+      - 5671:5671
+      - 5672:5672
+      - 15671:15671
+      - 15672:15672
+      - 25672:25672
+    expose:
+      - 4369
+      - 5671
+      - 5672
+      - 15671
+      - 15672
+      - 25672
+    environment:
+      - RABBITMQ_DEFAULT_USER=$RMQ_DEFAULT_USER
+      - RABBITMQ_DEFAULT_PASS=$RMQ_DEFAULT_PASS
+    networks:
+      - elk-net
+      - hub-platform-net
