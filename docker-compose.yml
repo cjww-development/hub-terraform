@@ -54,3 +54,40 @@ services:
     networks:
       - elk-net
       - hub-platform-net
+
+  administration:
+    image: cjwwdevelopment/administration:$ADMIN_VER
+    container_name: $ADMIN_CONTAINER_NAME
+    hostname: $ADMIN_CONTAINER_NAME
+    ports:
+      - 9876:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      MAN_ACC_URI: $AM_CONTAINER_NAME
+      COLOURED_OUTPUT: 'false'
+    networks:
+      - hub-platform-net
+
+  administration-frontend:
+    image: cjwwdevelopment/administration-frontend:$ADMIN_FE_VER
+    container_name: $ADMIN_FE_CONTAINER_NAME
+    hostname: $ADMIN_FE_CONTAINER_NAME
+    ports:
+      - 9875:9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      ADMIN_ROUTE: http://${ADMIN_CONTAINER_NAME}:9000/administration
+      # DEVERSITY_FE_ROUTE: http://deversity-frontend.local:9000
+      # DEVERSITY_ROUTE: http://deversity.local:9000
+      # AUTH_SERVICE_ROUTE: http://auth-service.local:9000
+      # AUTH_MICRO_ROUTE: http://auth.local:9000
+      # ACC_MICRO_ROUTE: http://accounts.local:9000
+      # SESSION_STORE_ROUTE: http://session-store.local:9000
+      # MESSAGING_HUB_ROUTE: http://messaging-hub.local:9000
+      COLOURED_OUTPUT: 'false'
+    networks:
+      - hub-platform-net
