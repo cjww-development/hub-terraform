@@ -81,13 +81,140 @@ services:
       - $LOGGING_OUTPUT_PATH:/opt/docker/logs
     environment:
       ADMIN_ROUTE: http://${ADMIN_CONTAINER_NAME}:9000/administration
-      # DEVERSITY_FE_ROUTE: http://deversity-frontend.local:9000
-      # DEVERSITY_ROUTE: http://deversity.local:9000
-      # AUTH_SERVICE_ROUTE: http://auth-service.local:9000
-      # AUTH_MICRO_ROUTE: http://auth.local:9000
-      # ACC_MICRO_ROUTE: http://accounts.local:9000
-      # SESSION_STORE_ROUTE: http://session-store.local:9000
-      # MESSAGING_HUB_ROUTE: http://messaging-hub.local:9000
+      DEVERSITY_FE_ROUTE: http://${DEVERSITY_FE_CONTAINER_NAME}:9000
+      DEVERSITY_ROUTE: http://${DEVERSITY_CONTAINER_NAME}:9000
+      AUTH_SERVICE_ROUTE: http://${AUTH_SERVICE_CONTAINER_NAME}:9000
+      AUTH_MICRO_ROUTE: http://${AUTH_CONTAINER_NAME}:9000
+      ACC_MICRO_ROUTE: http://${ACCOUNTS_CONTAINER_NAME}:9000
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000
+      MESSAGING_HUB_ROUTE: http://${MSG_HUB_CONTAINER_NAME}:9000
       COLOURED_OUTPUT: 'false'
+    networks:
+      - hub-platform-net
+
+  session-store:
+    image: cjwwdevelopment/session-store:$SESSION_STORE_VER
+    container_name: $SESSION_STORE_CONTAINER_NAME
+    hostname: $SESSION_STORE_CONTAINER_NAME
+    ports:
+      - 8400:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      MONGO_URI: $PM_CONTAINER_NAME
+    networks:
+      - hub-platform-net
+
+  messaging-hub:
+    image: cjwwdevelopment/messaging-hub:$MSG_HUB_VER
+    container_name: $MSG_HUB_CONTAINER_NAME
+    hostname: $MSG_HUB_CONTAINER_NAME
+    ports:
+      - 8000:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      AUD_EV_STORE_URI: $PM_CONTAINER_NAME
+      FEED_EV_STORE_URI: $PM_CONTAINER_NAME
+      RABBITMQ_HOST: $RMQ_CONTAINER_NAME
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000/session-store
+    networks:
+      - hub-platform-net
+    depends_on:
+      - rabbitmq
+
+  deversity:
+    image: cjwwdevelopment/deversity:$DEVERSITY_VER
+    container_name: $DEVERSITY_CONTAINER_NAME
+    hostname: $DEVERSITY_CONTAINER_NAME
+    ports:
+      - 9973:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      USER_ACC_URI: $PM_CONTAINER_NAME
+      ORG_ACC_URI: $PM_CONTAINER_NAME
+      REG_CODE_URI: $PM_CONTAINER_NAME
+      CLASS_URI: $PM_CONTAINER_NAME
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000/session-store
+      AUTH_MICRO_ROUTE: http://${AUTH_CONTAINER_NAME}:9000/auth
+    networks:
+      - hub-platform-net
+
+  accounts:
+    image: cjwwdevelopment/accounts-microservice:$ACCOUNTS_VER
+    container_name: $ACCOUNTS_CONTAINER_NAME
+    hostname: $ACCOUNTS_CONTAINER_NAME
+    ports:
+      - 8603:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      ORG_ACC_URI: $PM_CONTAINER_NAME
+      USER_ACC_URI: $PM_CONTAINER_NAME
+      USER_FEED_URI: $PM_CONTAINER_NAME
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000/session-store
+      AUTH_MICRO_ROUTE: http://${AUTH_CONTAINER_NAME}:9000/auth
+    networks:
+      - hub-platform-net
+
+  auth:
+    image: cjwwdevelopment/auth-microservice:$AUTH_VER
+    container_name: $AUTH_CONTAINER_NAME
+    hostname: $AUTH_CONTAINER_NAME
+    ports:
+      - 8601:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      ORG_ACC_URI: $PM_CONTAINER_NAME
+      USER_ACC_URI: $PM_CONTAINER_NAME
+      CONTEXT_URI: $PM_CONTAINER_NAME
+    networks:
+      - hub-platform-net
+
+  auth-service:
+    image: cjwwdevelopment/auth-service:$AUTH_SERVICE_VER
+    container_name: $AUTH_SERVICE_CONTAINER_NAME
+    hostname: $AUTH_SERVICE_CONTAINER_NAME
+    ports:
+      - 8602:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      ACC_MICRO_ROUTE: http://${ACCOUNTS_CONTAINER_NAME}:9000/accounts
+      AUTH_MICRO_ROUTE: http://${AUTH_CONTAINER_NAME}:9000/auth
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000/session-store
+      DEVERSITY_ROUTE: http://${DEVERSITY_CONTAINER_NAME}:9000/deversity
+    networks:
+      - hub-platform-net
+
+  deversity-frontend:
+    image: cjwwdevelopment/deversity-frontend:$DEVERSITY_FE_VER
+    container_name: $DEVERSITY_FE_CONTAINER_NAME
+    hostname: $DEVERSITY_FE_CONTAINER_NAME
+    ports:
+      - 9986:9000
+    expose:
+      - 9000
+    volumes:
+      - $LOGGING_OUTPUT_PATH:/opt/docker/logs
+    environment:
+      ACC_MICRO_ROUTE: http://${ACCOUNTS_CONTAINER_NAME}:9000/accounts
+      AUTH_MICRO_ROUTE: http://${AUTH_CONTAINER_NAME}:9000/auth
+      SESSION_STORE_ROUTE: http://${SESSION_STORE_CONTAINER_NAME}:9000/session-store
+      DEVERSITY_ROUTE: http://${DEVERSITY_CONTAINER_NAME}:9000/deversity
     networks:
       - hub-platform-net
